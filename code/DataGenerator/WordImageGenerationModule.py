@@ -72,22 +72,22 @@ class WordRenderer(object):
         self.CurrentFont = None
         
         # Corpus
-        self.Vocabulary = None
-        self.CharSet = None
-        self.Corpus = None
-        self._LoadCorpus()
+        #self.Vocabulary = None
+        #self.CharSet = None
+        #self.Corpus = None
+        #self._LoadCorpus()
         
         # Fonts
-        self.AvailableFontPaths = []
-        print(f"Loading Fonts from: {self.FontRoots}")
-        for FontRoot in self.FontRoots:
-            self.AvailableFontPaths.extend(self._FindAllFonts(FontRoot, is_debug=kwargs.get('is_debug', True)))
-        self._Filter_Font()
+        #self.AvailableFontPaths = []
+        #print(f"Loading Fonts from: {self.FontRoots}")
+        #for FontRoot in self.FontRoots:
+        #    self.AvailableFontPaths.extend(self._FindAllFonts(FontRoot, is_debug=kwargs.get('is_debug', True)))
+        #self._Filter_Font()
         
         # initialize an empty sticker for overlapping text
         self.empty_path = osp.join(self.ContentPath, f'empty.png')
         cv2.imwrite(self.empty_path, np.zeros((20,20,4), dtype=np.uint8))
-        self._load_bgs()
+        #self._load_bgs()
     
     def _load_bgs(self):
         if self.BackGroundPath:
@@ -269,6 +269,19 @@ class WordRenderer(object):
         :param WordColor:
         :return: Img[HxWx4], Texts(List[str]), CBOX[nx4x2], BBOX[nx4x2] (N_box, corner, x/y)
         """
+
+        img_dir = "/home/edouard/Git/resources/bg_img"
+        img_path = random.choice([os.path.join(img_dir, f) for f in os.listdir(img_dir)])
+
+        img = resize_image(cv2.imread(img_path, cv2.IMREAD_UNCHANGED), (Height, Width))
+        path = osp.join(self.ContentPath, f'word-{SaveID}.png')
+        cv2.imwrite(path, img)
+        H, W, _ = img.shape
+        CBOX = np.array([])
+        BBOX = np.array([[0, 0, H, W]])
+        BBOX = np.reshape(np.stack([BBOX[:, 0], BBOX[:, 1], BBOX[:, 2], BBOX[:, 1], BBOX[:, 2], BBOX[:, 3], BBOX[:, 0], BBOX[:, 3]], axis=-1), newshape=[-1, 4, 2])
+        return path, [], CBOX, BBOX, W, H
+
         FontSize = self.getFontSize(Height, Width)
         if FontSize > min(Height, Width):
             FontSize //= 2
@@ -463,6 +476,29 @@ class WordRenderer(object):
             word = self.Corpus[start: start+Len]
         return word[0]
 
+def resize_image(img, size=(28,28)):
+
+    h, w = img.shape[:2]
+    c = img.shape[2] if len(img.shape)>2 else 1
+
+    if h == w: 
+        return cv2.resize(img, size, cv2.INTER_AREA)
+
+    dif = h if h > w else w
+
+    interpolation = cv2.INTER_AREA if dif > (size[0] + size[1]) // 2 else cv2.INTER_CUBIC
+
+    x_pos = (dif - w)//2
+    y_pos = (dif - h)//2
+
+    if len(img.shape) == 2:
+        mask = np.zeros((dif, dif), dtype=img.dtype)
+        mask[y_pos:y_pos+h, x_pos:x_pos+w] = img[:h, :w]
+    else:
+        mask = np.zeros((dif, dif, c), dtype=img.dtype)
+        mask[y_pos:y_pos+h, x_pos:x_pos+w, :] = img[:h, :w, :]
+
+    return cv2.resize(mask, size, interpolation)
 
 if __name__ == '__main__':
     # testing: 

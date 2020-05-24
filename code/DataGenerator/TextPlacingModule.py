@@ -146,7 +146,7 @@ class TextNormalBasedLocalization(object):
                     word_img_file_handle.write(self.WordPainter[0].empty_path+'\n')
                     continue
                 
-                if random.random() < self.use_real_img and min(box_height, box_width) > 50: 
+                if 1000 < self.use_real_img and min(box_height, box_width) > 50: 
                     if self.is_debug:
                         print(f" ---- Put bg img instead")
                     self.AllTextObjects[ID].IsValid = False

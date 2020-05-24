@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFo
 parser.add_argument('--MovementModule', type=str, default='default', help='')
 parser.add_argument('--EnvModule', type=str, default='default', help='')
 parser.add_argument('--TextModule', type=str, default='default', help='')
-parser.add_argument('--num_gen', type=int, default=100, help='the desired number of images to generate')
+parser.add_argument('--num_gen', type=int, default=5, help='the desired number of images to generate')
 parser.add_argument('--anchor_freq', type=int, default=100, help='')
 parser.add_argument('--height', type=int, default=720, help='')
 parser.add_argument('--width', type=int, default=1080, help='')
