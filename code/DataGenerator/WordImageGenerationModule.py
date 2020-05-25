@@ -271,16 +271,17 @@ class WordRenderer(object):
         """
 
         img_dir = "/home/edouard/Git/resources/bg_img"
-        img_path = random.choice([os.path.join(img_dir, f) for f in os.listdir(img_dir)])
+        img_name = random.choice([f for f in os.listdir(img_dir)])
+        img_path = os.path.join(img_dir, img_name)
 
-        img = resize_image(cv2.imread(img_path, cv2.IMREAD_UNCHANGED), (Height, Width))
+        img = resize_image(cv2.imread(img_path, cv2.IMREAD_UNCHANGED), Height, None)
         path = osp.join(self.ContentPath, f'word-{SaveID}.png')
         cv2.imwrite(path, img)
         H, W, _ = img.shape
         CBOX = np.array([])
-        BBOX = np.array([[0, 0, H, W]])
+        BBOX = np.array([[0, 0, 1, 1]])
         BBOX = np.reshape(np.stack([BBOX[:, 0], BBOX[:, 1], BBOX[:, 2], BBOX[:, 1], BBOX[:, 2], BBOX[:, 3], BBOX[:, 0], BBOX[:, 3]], axis=-1), newshape=[-1, 4, 2])
-        return path, [], CBOX, BBOX, W, H
+        return path, [img_name.split(".")[0]], CBOX, BBOX, W, H
 
         FontSize = self.getFontSize(Height, Width)
         if FontSize > min(Height, Width):
@@ -476,29 +477,36 @@ class WordRenderer(object):
             word = self.Corpus[start: start+Len]
         return word[0]
 
-def resize_image(img, size=(28,28)):
+def resize_image(image, width = None, height = None, inter = cv2.INTER_AREA):
+    # initialize the dimensions of the image to be resized and
+    # grab the image size
+    dim = None
+    (h, w) = image.shape[:2]
 
-    h, w = img.shape[:2]
-    c = img.shape[2] if len(img.shape)>2 else 1
+    # if both the width and height are None, then return the
+    # original image
+    if width is None and height is None:
+        return image
 
-    if h == w: 
-        return cv2.resize(img, size, cv2.INTER_AREA)
+    # check to see if the width is None
+    if width is None:
+        # calculate the ratio of the height and construct the
+        # dimensions
+        r = height / float(h)
+        dim = (int(w * r), height)
 
-    dif = h if h > w else w
-
-    interpolation = cv2.INTER_AREA if dif > (size[0] + size[1]) // 2 else cv2.INTER_CUBIC
-
-    x_pos = (dif - w)//2
-    y_pos = (dif - h)//2
-
-    if len(img.shape) == 2:
-        mask = np.zeros((dif, dif), dtype=img.dtype)
-        mask[y_pos:y_pos+h, x_pos:x_pos+w] = img[:h, :w]
+    # otherwise, the height is None
     else:
-        mask = np.zeros((dif, dif, c), dtype=img.dtype)
-        mask[y_pos:y_pos+h, x_pos:x_pos+w, :] = img[:h, :w, :]
+        # calculate the ratio of the width and construct the
+        # dimensions
+        r = width / float(w)
+        dim = (width, int(h * r))
 
-    return cv2.resize(mask, size, interpolation)
+    # resize the image
+    resized = cv2.resize(image, dim, interpolation = inter)
+
+    # return the resized image
+    return resized
 
 if __name__ == '__main__':
     # testing: 
